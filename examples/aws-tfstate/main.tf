@@ -8,9 +8,17 @@ terraform {
   backend "local" {}
 }
 
-variable "aws_region" {}
+locals {
+  aws_region = "us-east-1"
+}
+
+provider "aws" {
+  region = local.aws_region 
+}
 
 module "tfstate_backend" {
   source = "../../aws-tfstate"
-  bucket_prefix = "lgntd-2"
+  bucket_prefix = "aws-tfstate"
+  aws_region   = local.aws_region
+  force_destroy = true
 }

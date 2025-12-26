@@ -13,3 +13,8 @@ output "bucket_key" {
   value = "${var.bucket_key}"
 }
 
+output "aws_region" {
+  description = "The AWS region where the S3 bucket is created"
+  value       = aws_s3_bucket.default.region
+}
+
