@@ -23,5 +23,5 @@ module "aws-lambda" {
   ecr_repo               = "my-hello-world-repo"
   function_name          = "hello-world"
   deployment_config_name = "CodeDeployDefault.LambdaLinear10PercentEvery1Minute"
-  sns_notify_topic_arn   = "arn:aws:sns:us-east-1:658068096501:any-notification"
+  sns_notify_topic_arn   = ""
 }
