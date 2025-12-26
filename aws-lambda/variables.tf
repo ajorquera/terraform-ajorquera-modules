@@ -37,7 +37,7 @@ variable "max_images" {
     default     = 5
 }
 
-variable "code_deploy_config_name" {
+variable "deployment_config_name" {
     description = "The name of the CodeDeploy deployment configuration"
     type        = string
     default     = "CodeDeployDefault.LambdaAllAtOnce"
@@ -52,7 +52,7 @@ variable "code_deploy_config_name" {
             "CodeDeployDefault.LambdaCanary10Percent10Minutes", 
             "CodeDeployDefault.LambdaCanary10Percent15Minutes", 
             "CodeDeployDefault.LambdaCanary10Percent30Minutes"
-        ], var.code_deploy_config_name)
+        ], var.deployment_config_name)
         error_message = "The deployment_config_name must be one of the predefined CodeDeploy Lambda deployment configurations."
     }
 }

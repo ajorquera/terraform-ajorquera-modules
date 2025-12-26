@@ -39,14 +39,13 @@ provider "docker" {
 module "lambda_function_container_image" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = var.function_name
-  description   = var.description
-
+  function_name  = var.function_name
+  description    = var.description
+  publish        = true
   create_package = false
-
-  image_uri    = module.docker_image.image_uri
-  package_type = "Image"
-  architectures = ["arm64"] 
+  package_type   = "Image"
+  architectures  = ["arm64"] 
+  image_uri      = module.docker_image.image_uri
 }
 
 module "docker_image" {
@@ -110,17 +109,19 @@ resource "terraform_data" "tag_latest" {
   depends_on = [module.docker_image]
 }
 
-module "alias_refresh" {
-  source = "terraform-aws-modules/lambda/aws//modules/alias"
-
+resource "aws_lambda_alias" "live" {
   name             = "live"
   function_name    = module.lambda_function_container_image.lambda_function_name
   function_version = module.lambda_function_container_image.lambda_function_version
+
+  lifecycle {
+    ignore_changes = [function_version]
+  }
 }
 
 resource "aws_lambda_function_url" "alias_url" {
   function_name      = module.lambda_function_container_image.lambda_function_name
-  qualifier          = module.alias_refresh.lambda_alias_name
+  qualifier          = aws_lambda_alias.live.name
   authorization_type = "NONE"
 
   cors {
@@ -136,19 +137,25 @@ resource "aws_lambda_function_url" "alias_url" {
 module "deploy" {
   source = "terraform-aws-modules/lambda/aws//modules/deploy"
 
-  alias_name     = module.alias_refresh.lambda_alias_name
+  alias_name     = aws_lambda_alias.live.name
   function_name  = module.lambda_function_container_image.lambda_function_name
   target_version = module.lambda_function_container_image.lambda_function_version
+
+  app_name                = "${var.function_name}-codedeploy-app"
+  deployment_group_name   = "${var.function_name}-deployment-group"
   
-  app_name              = "${var.function_name}-codedeploy-app"
-  deployment_group_name = "${var.function_name}-deployment-group"
-
-  create_deployment_group    = true
   create_app                 = true
+  create_deployment_group    = true
+  create_codedeploy_role     = true
+  attach_triggers_policy     = var.sns_notify_topic_arn != "" ? true : false
+  
+  create_deployment          = true
   run_deployment             = true
-  wait_deployment_completion = true
+  wait_deployment_completion = false
 
-  deployment_config_name      = var.code_deploy_config_name
+  deployment_config_name = var.deployment_config_name
+  
+  aws_cli_command = "AWS_REGION=${var.aws_region} aws"
 
   triggers = var.sns_notify_topic_arn != "" ? {
     failed = {
@@ -157,8 +164,48 @@ module "deploy" {
       target_arn = var.sns_notify_topic_arn
     }
   } : {}
+  
+  depends_on = [aws_lambda_alias.live]
+}
 
-  depends_on = [module.alias_refresh]
+resource "aws_iam_role_policy" "default" {
+  name = "${var.function_name}-codedeploy-access"
+  role = "${var.function_name}-codedeploy-app-codedeploy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction",
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration",
+          "lambda:GetAlias",
+          "lambda:UpdateAlias",
+          "lambda:PublishVersion"
+        ]
+        Resource = [
+          module.lambda_function_container_image.lambda_function_arn,
+          "${module.lambda_function_container_image.lambda_function_arn}:*"
+        ]
+      }
+    ]
+  })
+  
+  depends_on = [module.deploy]
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
