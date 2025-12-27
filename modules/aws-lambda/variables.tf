@@ -23,7 +23,7 @@ variable "function_name" {
 variable "description" {
     description = "The description of the Lambda function"
     type        = string
-    default     = "My Lambda function deployed via Terraform"
+    default     = ""
 }
 
 variable "ecr_repo" {
@@ -61,4 +61,10 @@ variable "sns_notify_topic_arn" {
     description = "The ARN of the SNS topic to notify on deployment failures"
     type        = string
     default     = ""   
+}
+
+variable "environment_variables" {
+  description = "A map of environment variables to set for the Lambda function"
+  type        = map(string)
+  default     = {}
 }

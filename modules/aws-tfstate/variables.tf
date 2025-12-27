@@ -7,6 +7,7 @@ variable "bucket_name" {
 variable "bucket_prefix" {
   type = string
   description = "The prefix inside the bucket where the state will be store"
+  default = "aws-tfstate"
 }
 
 variable "bucket_key" {

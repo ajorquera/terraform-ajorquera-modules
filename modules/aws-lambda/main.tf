@@ -46,6 +46,8 @@ module "lambda_function_container_image" {
   package_type   = "Image"
   architectures  = ["arm64"] 
   image_uri      = module.docker_image.image_uri
+  
+  environment_variables = var.environment_variables
 }
 
 module "docker_image" {
@@ -168,9 +170,9 @@ module "deploy" {
   depends_on = [aws_lambda_alias.live]
 }
 
-resource "aws_iam_role_policy" "default" {
+resource "aws_iam_role_policy" "codedeploy_access" {
   name = "${var.function_name}-codedeploy-access"
-  role = "${var.function_name}-codedeploy-app-codedeploy"
+  role = module.deploy.codedeploy_role_name
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -183,7 +185,7 @@ resource "aws_iam_role_policy" "default" {
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetAuthorizationToken"
         ]
-        Resource = "*"
+        Resource = ecr_code_repository.module.docker_image.ecr_repo_arn
       },
       {
         Effect = "Allow"
@@ -197,10 +199,8 @@ resource "aws_iam_role_policy" "default" {
           "lambda:UpdateAlias",
           "lambda:PublishVersion"
         ]
-        Resource = [
-          module.lambda_function_container_image.lambda_function_arn,
-          "${module.lambda_function_container_image.lambda_function_arn}:*"
-        ]
+        Resource = "${module.lambda_function_container_image.lambda_function_arn}:*"
+        
       }
     ]
   })
