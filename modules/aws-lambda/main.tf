@@ -172,8 +172,7 @@ module "deploy" {
 
 resource "aws_iam_role_policy" "codedeploy_access" {
   name = "${var.function_name}-codedeploy-access"
-  role = "${var.function_name}-codedeploy-role"
-
+  role = "${var.function_name}-codedeploy-app-codedeploy"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
