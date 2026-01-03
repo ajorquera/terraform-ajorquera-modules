@@ -17,7 +17,7 @@ provider "aws" {
 }
 
 module "aws-lambda" {
-  source = "../../aws-lambda"
+  source = "../../modules/aws-lambda"
 
   aws_region             = local.aws_region   
   ecr_repo               = "my-hello-world-repo"

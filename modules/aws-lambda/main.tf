@@ -172,7 +172,7 @@ module "deploy" {
 
 resource "aws_iam_role_policy" "codedeploy_access" {
   name = "${var.function_name}-codedeploy-access"
-  role = module.deploy.codedeploy_role_name
+  role = "${var.function_name}-codedeploy-role"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -185,7 +185,7 @@ resource "aws_iam_role_policy" "codedeploy_access" {
           "ecr:BatchCheckLayerAvailability",
           "ecr:GetAuthorizationToken"
         ]
-        Resource = ecr_code_repository.module.docker_image.ecr_repo_arn
+        Resource = "arn:aws:ecr:${var.aws_region}:${data.aws_caller_identity.current.account_id}:repository/${var.ecr_repo}"
       },
       {
         Effect = "Allow"

@@ -15,5 +15,5 @@ output "role_name" {
 
 output "codeDeploy_role_name" {
   description = "Name of the IAM role associated with CodeDeploy"
-  value       = aws_iam_role.codedeploy_role.name
+  value       = aws_iam_role_policy.codedeploy_access.role
 }
