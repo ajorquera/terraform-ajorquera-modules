@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "default" {
   provisioner "local-exec" {
     when    = create
     command = <<-EOT
-      perl -pi -e 's/backend "local" {}/backend "s3" {\n    bucket = "${aws_s3_bucket.default.bucket}"\n    key    = "${var.bucket_key}"\n    region = "${aws_s3_bucket.default.region}"\n  }/g' main.tf
+      perl -pi -e 's/backend "local" {}/backend "s3" {\n    bucket = "${aws_s3_bucket.default.bucket}"\n    key    = "${var.bucket_key}"\n    region = "${var.aws_region}"\n  }/g' main.tf
     EOT
     
     working_dir = path.root

@@ -12,9 +12,3 @@ output "bucket_key" {
   description = "The key inside the bucket where the state will be stored"
   value = "${var.bucket_key}"
 }
-
-output "aws_region" {
-  description = "The AWS region where the S3 bucket is created"
-  value       = aws_s3_bucket.default.region
-}
-
